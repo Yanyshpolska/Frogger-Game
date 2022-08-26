@@ -1,10 +1,6 @@
 "use strict";
-const CANVAS = {
-  width: 505,
-  height: 606,
-};
 const CELL = {
-  width: CANVAS.width / 5,
+  width: 101,
   height: 80,
 };
 const playerStartPosition = {
@@ -12,56 +8,70 @@ const playerStartPosition = {
   height: CELL.height * 5,
 };
 
+const bugRacePosition = [62, 146, 230];
+// const bugSpeed =
+
+const score = document.createElement("div");
+score.innerHTML = "SCORE";
+document.body.append(score);
 // Enemies our player must avoid
-const Enemy = function () {
-  //     Setting the Enemy initial location (you need to implement)
-  //     Setting the Enemy speed (you need to implement)
-  // this.speed = ;
-  this.x = 0;
-  //   this.y = 62;
-  this.y = 146;
-  //   this.y = 230;
-  this.sprite = "images/enemy-bug.png";
-};
+// const Enemy = function (y, speed) {
+//   //     Setting the Enemy initial location (you need to implement)
+//   //     Setting the Enemy speed (you need to implement)
+//   this.speed = speed;
+//   this.x = 0;
+//   this.y = bugRacePosition[Math.floor(Math.random() * bugRacePosition.length)];
+//   this.sprite = "images/enemy-bug.png";
+// };
 
 //     Updates the Enemy location (you need to implement)
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
-Enemy.prototype.update = function (dt) {
-  // You should multiply any movement by the dt parameter
-  // which will ensure the game runs at the same speed for
-  // all computers.
-};
-//     Handles collision with the Player (you need to implement)
+// Enemy.prototype.update = function (dt) {
+//   this.x = this.x + this.speed * dt;
+//   // You should multiply any movement by the dt parameter
+//   // which will ensure the game runs at the same speed for
+//   // all computers.
+// };
+// //     Handles collision with the Player (you need to implement)
 
-Enemy.prototype.render = function () {
-  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
+// Enemy.prototype.render = function () {
+//   ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+// };
 
-// class extension is implemented using Subclass.prototype = Object.create(Superclass.prototype),
-// not Subclass.prototype = new Superclass(params);
+const Enemy = {
+  speed: Math.floor(Math.random() * 50 + 100),
+  x: -100,
+  y: bugRacePosition[Math.floor(Math.random() * bugRacePosition.length)],
+  sprite: "images/enemy-bug.png",
+  update: function (dt) {
+    this.x = this.x + this.speed * dt;
+    if (this.x > 505) {
+      this.x = -100;
+    }
+  },
+  render: function () {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+  },
+  kissPlayer: function (player) {
+    if (this.x === player.x) {
+      player.x = playerStartPosition.width;
+      player.y = playerStartPosition.height;
+    }
+    console.log(player.x);
+  },
+};
 
 const Player = {
   x: playerStartPosition.width,
   y: playerStartPosition.height,
+  score: 0,
   sprite: "images/char-boy.png",
   render: function () {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
   },
   //     The update method for the Player (can be similar to the one for the Enemy)
-  update: function (dt) {
-    if (this.x > 404) {
-      this.x = 404;
-    } else if (this.x < 0) {
-      this.x = 0;
-    }
-    if (this.y > 404) {
-      this.y = 404;
-    } else if (this.y < 0) {
-      this.y = 0;
-    }
-  },
-  //     Recall that the player cannot move off screen (so you will need to check for that and handle appropriately).
+  update: function (dt) {},
   //     If the player reaches the water the game should be reset by moving the player back to the initial location (you can write a separate reset Player method to handle that).
   handleInput: function (pressedKey) {
     switch (pressedKey) {
@@ -72,23 +82,58 @@ const Player = {
         this.x += -101;
         break;
       case "up":
-        this.y += -83;
+        this.y += -82;
         break;
       case "down":
-        this.y += 83;
+        this.y += 82;
         break;
+    }
+    if (this.x > 404) {
+      this.x = 404;
+    } else if (this.x < 0) {
+      this.x = 0;
+    }
+    if (this.y > 400) {
+      this.y = 400;
+    } else if (this.y < 15) {
+      this.x = playerStartPosition.width;
+      this.y = playerStartPosition.height;
     }
   },
 };
 
+const allEnemies = [];
+
+function createNewBug() {
+  const newEnemy = {
+    __proto__: Enemy,
+    y: bugRacePosition[Math.floor(Math.random() * bugRacePosition.length)],
+    speed: Math.floor(Math.random() * 70 + 100),
+  };
+  allEnemies.push(newEnemy);
+}
 // Place all enemy objects in an array called allEnemies
-let allEnemies = [new Enemy()];
+setTimeout(createNewBug(), 500);
+setTimeout(createNewBug(), 5500);
+setTimeout(createNewBug(), 2500);
+setTimeout(createNewBug(), 2500);
+setTimeout(createNewBug(), 2500);
+
+// const enem = {};
+// enem.__proto__ = Enemy;
+// enem.speed = 0;
+// enem.x = -100;
+// allEnemies.push(enem);
+// let allEnemies = [new Enemy(62, 100), new Enemy(146, 150)];
 // // Place the player object in a variable called player
-const player = {};
+const player = { __proto__: Player };
+// class extension is implemented using Subclass.prototype = Object.create(Superclass.prototype),
+// not Subclass.prototype = new Superclass(params);
 // player.prototype = Object.create(Player.prototype);
-player.__proto__ = Player;
-console.log(allEnemies);
-console.log(player);
+// player.__proto__ = Player;
+// console.log(allEnemies);
+// console.log(player);
+allEnemies.forEach((enem) => enem.kissPlayer(player));
 
 document.addEventListener("keyup", function (e) {
   var allowedKeys = {
