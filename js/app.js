@@ -1,131 +1,180 @@
 "use strict";
-const playerWidth = 80;
 
-const CELL = {
-  width: 101,
-  height: 80,
+const CELL_WIDTH = 101;
+const CELL_HEIGHT = 83;
+
+const NUMBER_OF_COLUMNS = 5;
+const NUMBER_OF_ROWS = 5;
+
+const FIELD_WIDTH = CELL_WIDTH * NUMBER_OF_COLUMNS;
+const FIELD_HEIGHT = CELL_HEIGHT * NUMBER_OF_ROWS;
+
+const PLAYER_START_POSITION = {
+  x: CELL_WIDTH * Math.floor(NUMBER_OF_COLUMNS / 2),
+  y: CELL_HEIGHT * NUMBER_OF_ROWS,
+  rowPosition: NUMBER_OF_ROWS,
 };
-const gameField = {
-  width: CELL.width * 5,
-  height: CELL.height * 5,
-};
-const playerStartPosition = {
-  width: CELL.width * 2,
-  height: CELL.height * 5,
-};
-const bugRacePosition = [62, 146, 230];
+
+const minEnemySpeed = 100;
+const speedIncrease = 70;
+const numberOfEnemies = 5;
+
+const ENEMY_POSITION_CORRECTION = 62;
+const NUMBER_OF_ENEMIES_ROWS = 3;
+
 const getRandomNumber = (a) => Math.floor(Math.random() * a);
+const getEnemyRowPosition = (numberOfRows) =>
+  ENEMY_POSITION_CORRECTION + CELL_HEIGHT * getRandomNumber(numberOfRows);
 
-// ===========SCORE block треба спробувати його опустити вниз=============
+// for better calculation of the collision between the player and enemies -
+// due to the fact that the player's picture is narrower than the size of the cell
+const PLAYER_WIDTH_CORRECTION = 80;
+//for better positioning of the player in the cell. depends on the picture of player.
+const PLAYER_POSITION_CORRECTION = 3;
+
+// ===========SCORE block ====================================================
 const score = document.createElement("div");
-let scorePoints = 0;
-score.innerHTML = "SCORE: " + scorePoints;
-document.body.after(score);
-// ===========Об'єкт жука==================================================
-const Enemy = {
-  x: -CELL.width,
-  sprite: "images/enemy-bug.png",
+document.body.append(score);
+score.style.fontSize = "2rem";
+score.style.fontFamily = "Arial";
+let wins = 0;
+let looses = 0;
+score.textContent = "Losses - " + looses + " _ " + "Wins - " + wins;
 
-  update: function (dt) {
-    this.x = this.x + this.speed * dt;
-    //  запускає жука заново в рандомний ряд
-    if (this.x > gameField.width) {
-      this.x = -CELL.width;
-      this.y = bugRacePosition[getRandomNumber(bugRacePosition.length)];
-      this.speed = getRandomNumber(70) + 100;
-      this.rowPosition = bugRacePosition.indexOf(this.y) + 1;
-    }
-    this.kissPlayer();
-  },
-  render: function () {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-  },
-  kissPlayer: function () {
-    const startColl = player.x - playerWidth;
-    const stopColl = player.x + playerWidth;
+// ===========ENEMY================================================================
+const Enemy = function (x, y, speed) {
+  this.speed = speed;
+  this.x = x;
+  this.y = y;
+  this.rowPosition = (this.y - ENEMY_POSITION_CORRECTION) / CELL_HEIGHT + 1;
+  this.sprite = "images/enemy-bug.png";
+};
+Enemy.prototype.update = function (dt) {
+  this.x = this.x + this.speed * dt;
+  if (this.x > FIELD_WIDTH) {
+    this.x = -CELL_WIDTH;
+    this.y = getEnemyRowPosition(NUMBER_OF_ENEMIES_ROWS);
+    this.rowPosition = (this.y - ENEMY_POSITION_CORRECTION) / CELL_HEIGHT + 1;
+    this.speed = getRandomNumber(speedIncrease) + minEnemySpeed;
+  }
+  this.checkCollision();
+};
+Enemy.prototype.render = function () {
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+Enemy.prototype.checkCollision = function () {
+  const startCollision = player.x - PLAYER_WIDTH_CORRECTION;
+  const stopCollision = player.x + PLAYER_WIDTH_CORRECTION;
 
-    if (
-      this.rowPosition === player.rowPosition &&
-      this.x >= startColl &&
-      this.x <= stopColl
-    ) {
-      player.x = playerStartPosition.width;
-      player.y = playerStartPosition.height;
-      player.rowPosition = 5;
-    }
-  },
+  if (
+    this.rowPosition === player.rowPosition &&
+    this.x >= startCollision &&
+    this.x <= stopCollision
+  ) {
+    player.setStartPosition();
+    looses += 1;
+    score.textContent = "Losses - " + looses + " _ " + "Wins - " + wins;
+  }
 };
 
-// ===========Об'єкт Player==================================================
-const Player = {
-  x: playerStartPosition.width,
-  y: playerStartPosition.height,
-  score: 0,
-  rowPosition: 5,
-  sprite: "images/char-cat-girl.png",
-
-  render: function () {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-  },
-
-  update: function (dt) {},
-
-  handleInput: function (pressedKey) {
-    switch (pressedKey) {
-      case "right":
-        this.x += CELL.width;
-        break;
-      case "left":
-        this.x += -CELL.width;
-        break;
-      case "up":
-        this.y += -82;
-        this.rowPosition > 1 ? (this.rowPosition -= 1) : this.rowPosition;
-        break;
-      case "down":
-        this.y += 82;
-        this.rowPosition < 5 ? (this.rowPosition += 1) : this.rowPosition;
-        break;
-    }
-    //  перевірка чи не вийшов за межі поля
-    if (this.x > 404) {
-      this.x = 404;
-    } else if (this.x < 0) {
-      this.x = 0;
-    }
-    //   дійшов до води
-    if (this.y > 400) {
-      this.y = 400;
-    } else if (this.y < 60) {
-      scorePoints += 1;
-      score.innerHTML = "SCORE: " + scorePoints;
-      this.x = playerStartPosition.width;
-      this.y = playerStartPosition.height;
-      this.rowPosition = 5;
-    }
-  },
+// =========== Player==================================================
+const Player = function (position) {
+  this.score = 0;
+  this.startPosition = position;
+  this.setStartPosition();
+  this.sprite = "images/char-cat-girl.png";
 };
-// ===============створюємо жуків
+Player.prototype.setStartPosition = function () {
+  this.rowPosition = this.startPosition.rowPosition;
+  this.x = this.startPosition.x;
+  this.y = this.startPosition.y - PLAYER_POSITION_CORRECTION * this.rowPosition;
+  console.log(this.y);
+};
+Player.prototype.update = function (dt) {
+  //  reached right/left borders
+  if (this.x > FIELD_WIDTH - CELL_WIDTH) {
+    this.x = FIELD_WIDTH - CELL_WIDTH;
+  } else if (this.x < 0) {
+    this.x = 0;
+  }
+  //  reached the water or bottom border
+  if (this.y > FIELD_HEIGHT) {
+    this.y = FIELD_HEIGHT - PLAYER_POSITION_CORRECTION * this.rowPosition;
+  } else if (this.y === 0) {
+    wins += 1;
+    score.textContent = "Losses - " + looses + " _ " + "Wins - " + wins;
+    this.setStartPosition();
+  }
+};
+Player.prototype.render = function () {
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+Player.prototype.handleInput = function (pressedKey) {
+  switch (pressedKey) {
+    case "right":
+      this.x += CELL_WIDTH;
+      break;
+    case "left":
+      this.x -= CELL_WIDTH;
+      break;
+    case "up":
+      this.y -= CELL_HEIGHT - PLAYER_POSITION_CORRECTION;
+      this.rowPosition -= 1;
+      break;
+    case "down":
+      this.y += CELL_HEIGHT - PLAYER_POSITION_CORRECTION;
+      this.rowPosition < NUMBER_OF_ROWS
+        ? (this.rowPosition += 1)
+        : this.rowPosition;
+      break;
+  }
+};
+
+// ================gems
+// const Gem = function (x, y) {
+//   this.x = x;
+//   this.y = y;
+//   this.rowPosition = (this.y - ENEMY_POSITION_CORRECTION) / CELL_HEIGHT + 1;
+//   this.sprite = "images/Gem Blue.png";
+// };
+// Enemy.prototype.update = function (dt) {
+//   this.x = this.x + this.speed * dt;
+
+//   this.checkCollision();
+// };
+// Enemy.prototype.render = function () {
+//   ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+// };
+// Enemy.prototype.checkCollision = function () {
+//   const startCollision = player.x - PLAYER_WIDTH_CORRECTION;
+//   const stopCollision = player.x + PLAYER_WIDTH_CORRECTION;
+
+//   if (
+//     this.rowPosition === player.rowPosition &&
+//     this.x >= startCollision &&
+//     this.x <= stopCollision
+//   ) {
+//     player.setStartPosition();
+//     looses += 1;
+//     score.textContent = "Losses - " + looses + " _ " + "Wins - " + wins;
+//   }
+// };
+
+const player = new Player(PLAYER_START_POSITION);
+// const gem = new Gem ();
 const allEnemies = [];
 
-function createNewBug() {
-  const newEnemy = {
-    __proto__: Enemy,
-    x: getRandomNumber(gameField.width),
-    y: bugRacePosition[getRandomNumber(bugRacePosition.length)],
-    speed: getRandomNumber(70) + 100,
-  };
-  newEnemy.rowPosition = bugRacePosition.indexOf(newEnemy.y) + 1;
-  allEnemies.push(newEnemy);
+function createNewBug(numberOfEnemies) {
+  for (let i = 0; i < numberOfEnemies; i += 1) {
+    const x = getRandomNumber(FIELD_WIDTH);
+    const y = getEnemyRowPosition(NUMBER_OF_ENEMIES_ROWS);
+    const speed = getRandomNumber(speedIncrease) + minEnemySpeed;
+    const newEnemy = new Enemy(x, y, speed);
+    allEnemies.push(newEnemy);
+  }
 }
-// Place all enemy objects in an array called allEnemies
-createNewBug();
-// createNewBug();
-// createNewBug();
-// createNewBug();
-// createNewBug();
-// ===================створюємо гравця
-const player = { __proto__: Player };
+
+createNewBug(numberOfEnemies);
 
 document.addEventListener("keyup", function (e) {
   var allowedKeys = {
