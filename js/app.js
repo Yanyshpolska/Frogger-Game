@@ -125,7 +125,7 @@ Player.prototype.update = function (dt) {
     this.setStartPosition();
     level += 1;
     score.textContent = "★ - " + stars + " _ " + "Level - " + level;
-    createNewBug(1, player);
+    createNewEnemy(1, player);
     star.newPosition();
   }
 };
@@ -190,7 +190,7 @@ star.newPosition();
 
 const allEnemies = [];
 
-function createNewBug(numberOfEnemies, victim) {
+function createNewEnemy(numberOfEnemies, victim) {
   for (let i = 0; i < numberOfEnemies; i += 1) {
     const x = getRandomNumber(FIELD_WIDTH);
     const y =
@@ -201,7 +201,7 @@ function createNewBug(numberOfEnemies, victim) {
   }
 }
 
-createNewBug(1, player);
+createNewEnemy(1, player);
 
 document.addEventListener("keyup", function (e) {
   var allowedKeys = {
@@ -214,8 +214,8 @@ document.addEventListener("keyup", function (e) {
 });
 
 (function addSwipeEventListener() {
-  doc.addEventListener("touchstart", handleTouchStart, false); //swipes handler for move player
-  doc.addEventListener("touchmove", handleTouchMove, false); //swipes handler for move player
+  document.addEventListener("touchstart", handleTouchStart, false); //swipes handler for move player
+  document.addEventListener("touchmove", handleTouchMove, false); //swipes handler for move player
 
   var xDown = null;
   var yDown = null;
