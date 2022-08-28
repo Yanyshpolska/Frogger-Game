@@ -32,7 +32,6 @@ const PLAYER_WIDTH_CORRECTION = 80;
 //for better positioning of the player in the cell. depends on the picture of player.
 const PLAYER_POSITION_CORRECTION = 3;
 
-// ===========SCORE block ====================================================
 const score = document.createElement("div");
 document.body.append(score);
 score.style.fontSize = "2rem";
@@ -41,7 +40,6 @@ let wins = 0;
 let looses = 0;
 score.textContent = "Losses - " + looses + " _ " + "Wins - " + wins;
 
-// ===========ENEMY================================================================
 const Enemy = function (x, y, speed) {
   this.speed = speed;
   this.x = x;
@@ -77,7 +75,6 @@ Enemy.prototype.checkCollision = function () {
   }
 };
 
-// =========== Player==================================================
 const Player = function (position) {
   this.score = 0;
   this.startPosition = position;
@@ -91,13 +88,11 @@ Player.prototype.setStartPosition = function () {
   console.log(this.y);
 };
 Player.prototype.update = function (dt) {
-  //  reached right/left borders
   if (this.x > FIELD_WIDTH - CELL_WIDTH) {
     this.x = FIELD_WIDTH - CELL_WIDTH;
   } else if (this.x < 0) {
     this.x = 0;
   }
-  //  reached the water or bottom border
   if (this.y > FIELD_HEIGHT) {
     this.y = FIELD_HEIGHT - PLAYER_POSITION_CORRECTION * this.rowPosition;
   } else if (this.y === 0) {
@@ -130,38 +125,7 @@ Player.prototype.handleInput = function (pressedKey) {
   }
 };
 
-// ================gems
-// const Gem = function (x, y) {
-//   this.x = x;
-//   this.y = y;
-//   this.rowPosition = (this.y - ENEMY_POSITION_CORRECTION) / CELL_HEIGHT + 1;
-//   this.sprite = "images/Gem Blue.png";
-// };
-// Enemy.prototype.update = function (dt) {
-//   this.x = this.x + this.speed * dt;
-
-//   this.checkCollision();
-// };
-// Enemy.prototype.render = function () {
-//   ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-// };
-// Enemy.prototype.checkCollision = function () {
-//   const startCollision = player.x - PLAYER_WIDTH_CORRECTION;
-//   const stopCollision = player.x + PLAYER_WIDTH_CORRECTION;
-
-//   if (
-//     this.rowPosition === player.rowPosition &&
-//     this.x >= startCollision &&
-//     this.x <= stopCollision
-//   ) {
-//     player.setStartPosition();
-//     looses += 1;
-//     score.textContent = "Losses - " + looses + " _ " + "Wins - " + wins;
-//   }
-// };
-
 const player = new Player(PLAYER_START_POSITION);
-// const gem = new Gem ();
 const allEnemies = [];
 
 function createNewBug(numberOfEnemies) {
