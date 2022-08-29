@@ -184,8 +184,7 @@ Star.prototype.checkCollision = function () {
     this.rowPosition === this.player.rowPosition &&
     this.x === this.player.x
   ) {
-    this.x = -101;
-    this.y = -171;
+    this.x = -CELL_WIDTH;
     stars += 1;
     updateScore(bestStars, bestLevel, stars, level);
   }
@@ -209,13 +208,13 @@ function initialisation(newGame) {
 
 initialisation();
 
-function createNewEnemy(numberOfEnemies, victim) {
+function createNewEnemy(numberOfEnemies, player) {
   for (let i = 0; i < numberOfEnemies; i += 1) {
     const x = getRandomNumber(FIELD_WIDTH);
     const y =
       getItemRowPosition(NUMBER_OF_DANGER_ROWS) + ENEMY_POSITION_CORRECTION;
     const speed = getRandomNumber(speedIncrease) + minEnemySpeed;
-    const newEnemy = new Enemy(x, y, speed, victim);
+    const newEnemy = new Enemy(x, y, speed, player);
     allEnemies.push(newEnemy);
   }
 }
