@@ -224,3 +224,51 @@ document.addEventListener("keyup", function (e) {
   };
   player.handleInput(allowedKeys[e.keyCode]);
 });
+
+(function addSwipeEventListener() {
+  document.addEventListener("touchstart", handleTouchStart, false); //swipes handler for move player
+  document.addEventListener("touchmove", handleTouchMove, false); //swipes handler for move player
+
+  var xDown = null;
+  var yDown = null;
+
+  function handleTouchStart(evt) {
+    const firstTouch = evt.touches[0];
+    xDown = firstTouch.clientX; //finger down
+    yDown = firstTouch.clientY; //finger down
+  }
+
+  function handleTouchMove(evt) {
+    if (!xDown || !yDown) {
+      return;
+    }
+
+    var xUp = evt.touches[0].clientX; //finger up
+    var yUp = evt.touches[0].clientY; //finger up
+
+    var xDiff = xDown - xUp;
+    var yDiff = yDown - yUp;
+
+    if (Math.abs(xDiff) > Math.abs(yDiff)) {
+      /*most significant*/
+      if (xDiff > 0) {
+        /* left swipe */
+        player.handleInput("left");
+      } else {
+        /* right swipe */
+        player.handleInput("right");
+      }
+    } else {
+      if (yDiff > 0) {
+        /* up swipe */
+        player.handleInput("up");
+      } else {
+        /* down swipe */
+        player.handleInput("down");
+      }
+    }
+    /* reset values */
+    xDown = null;
+    yDown = null;
+  }
+})();
